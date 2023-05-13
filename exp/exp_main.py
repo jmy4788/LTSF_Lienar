@@ -306,6 +306,11 @@ class Exp_Main(Exp_Basic):
         return
 
     def predict(self, setting, load=False):
+
+        # 2023.05.01
+        # Predloader에서, Dataframe의 마지막 부분만 실리는 것이 문제 같음
+        # 이 부분을 반복적으로 할 수 있도록 코드를 수정하는게 키가 될 것 같음
+        
         pred_data, pred_loader = self._get_data(flag='pred')
 
         if load:
@@ -316,6 +321,7 @@ class Exp_Main(Exp_Basic):
         preds = []
 
         self.model.eval()
+
         with torch.no_grad():
             for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pred_loader):
                 batch_x = batch_x.float().to(self.device)
@@ -346,18 +352,22 @@ class Exp_Main(Exp_Basic):
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 pred = outputs.detach().cpu().numpy()  # .squeeze()
                 preds.append(pred)
+        # 2023.03.12 preds = np.array(preds)에서 preds = np.array(preds).squeeze()로 변경
+        # preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1]) 따라서 이것도 주석화
+        preds = np.array(preds).squeeze()
 
-        preds = np.array(preds)
-        preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
         if (pred_data.scale):
             preds = pred_data.inverse_transform(preds)
-        
         # result save
         folder_path = './results/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
         np.save(folder_path + 'real_prediction.npy', preds)
-        pd.DataFrame(np.append(np.transpose([pred_data.future_dates]), preds[0], axis=1), columns=pred_data.cols).to_csv(folder_path + 'real_prediction.csv', index=False)
+        
+        # 2021.03.12 이 부분 concat하는데에서 문제가 발생했네?
+        # pd.DataFrame(np.append(np.transpose([pred_data.future_dates]), preds[0] - > preds(indexing 없애는 걸 수정), axis=1), columns=pred_data.cols).to_csv(folder_path + 'real_prediction.csv', index=False)
 
-        return
+        pd.DataFrame(np.append(np.transpose([pred_data.future_dates]), preds, axis=1), columns=pred_data.cols).to_csv(folder_path + 'real_prediction.csv', index=False)
+
+        return preds

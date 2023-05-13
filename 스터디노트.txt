@@ -1,0 +1,32 @@
+2023.05.01
+1. 데이터의 정확도를 높이려면? 우선 NLinear 모델 사용해볼까?
+2. 반복 학습량을 조금 더 늘리는 방안은?
+
+2023.05.03 금요일
+test0과 test1의 차이점은?
+과제1. LTSF-Linear의 검증 방법은?
+과제2. 정확도 향상 방법은?
+
+Integration
+3차원의 데이터로 뽑아내느 방법은?
+
+
+3가지를 npy파일로 따로 저장
+1. Ground truth
+2. Input Data
+3. prediction
+
+
+Scailing 문제
+일단 이 LTSF를 모듈화 시키는게 최우선이겠네
+
+
+# csv 데이터 읽어서 len을 처리 하는 함수를 만들어야 할 필요가 있음
+# 그리고 분석 값을 npy로 관리하는 함수를 만들어야 함
+
+
+# 일단 npy까지 저장 할 수 있게 만들었는데
+현재 까지는 lookback이 문제로 보임
+
+# groundtruth하고 lookback preds 결과하고 너무 차이가 나는데? 뭐지 시팔
+# time frame도 따로 저장해주는게 좋을 듯

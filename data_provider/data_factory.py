@@ -20,6 +20,7 @@ def data_provider(args, flag):
         drop_last = True
         batch_size = args.batch_size
         freq = args.freq
+
     elif flag == 'pred':
         shuffle_flag = False
         drop_last = False
@@ -41,13 +42,16 @@ def data_provider(args, flag):
         target=args.target,
         timeenc=timeenc,
         freq=freq,
-        train_only=train_only
+        train_only=train_only,
+        # look_back 파라미터 추가
+        lookback= args.lookback_len,
     )
-    print(flag, len(data_set))
+
     data_loader = DataLoader(
         data_set,
         batch_size=batch_size,
         shuffle=shuffle_flag,
         num_workers=args.num_workers,
         drop_last=drop_last)
+    
     return data_set, data_loader

@@ -192,7 +192,7 @@ class Dataset_ETT_minute(Dataset):
 class Dataset_Custom(Dataset):
     def __init__(self, root_path, flag='train', size=None,
                  features='S', data_path='ETTh1.csv',
-                 target='OT', scale=True, timeenc=0, freq='h', train_only=False):
+                 target='OT', scale=True, timeenc=0, freq='h', train_only=False, lookback = None):
         # size [seq_len, label_len, pred_len]
         # info
         if size == None:
@@ -231,6 +231,7 @@ class Dataset_Custom(Dataset):
         if self.features == 'S':
             cols.remove(self.target)
         cols.remove('date')
+        
         # print(cols)
         num_train = int(len(df_raw) * (0.7 if not self.train_only else 1))
         num_test = int(len(df_raw) * 0.2)
@@ -295,8 +296,9 @@ class Dataset_Custom(Dataset):
 
 class Dataset_Pred(Dataset):
     def __init__(self, root_path, flag='pred', size=None,
-                 features='S', data_path='ETTh1.csv',
-                 target='OT', scale=True, inverse=False, timeenc=0, freq='15min', cols=None, train_only=False):
+                 features='M', data_path='ETTh1.csv',
+                 target='OT', scale=True, inverse=False, timeenc=0, freq='1h', cols=None, train_only=False, lookback = None):
+        # 2023년 5월 1일 look_back_len = None 추가
         # size [seq_len, label_len, pred_len]
         # info
         if size == None:
@@ -319,6 +321,9 @@ class Dataset_Pred(Dataset):
         self.cols = cols
         self.root_path = root_path
         self.data_path = data_path
+
+        # 2023년 5월 1일 self.look_back_len = look_back_len 추가
+        self.lookback_len = lookback
         self.__read_data__()
 
     def __read_data__(self):
@@ -336,8 +341,14 @@ class Dataset_Pred(Dataset):
             cols.remove('date')
         if self.features == 'S':
             cols.remove(self.target)
-        border1 = len(df_raw) - self.seq_len
-        border2 = len(df_raw)
+        # 2023년 5월 1일 수정 코드
+        # 이 부분을 약간 더 수정할 필요는 있어 보임
+        border1 = len(df_raw) - self.seq_len - self.lookback_len
+        border2 = len(df_raw) - self.lookback_len
+
+        # Original 코드
+        # border1 = len(df_raw) - self.seq_len
+        # border2 = len(df_raw)
 
         if self.features == 'M' or self.features == 'MS':
             df_raw = df_raw[['date'] + cols]
@@ -355,7 +366,12 @@ class Dataset_Pred(Dataset):
 
         tmp_stamp = df_raw[['date']][border1:border2]
         tmp_stamp['date'] = pd.to_datetime(tmp_stamp.date)
+
+        # 2023.05.01 수정 코드
         pred_dates = pd.date_range(tmp_stamp.date.values[-1], periods=self.pred_len + 1, freq=self.freq)
+
+        # 원본 코드
+        # pred_dates = pd.date_range(tmp_stamp.date.values[-1], periods=self.pred_len + 1, freq=self.freq)
 
         df_stamp = pd.DataFrame(columns=['date'])
         df_stamp.date = list(tmp_stamp.date.values) + list(pred_dates[1:])
